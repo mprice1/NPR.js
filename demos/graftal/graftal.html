@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>2d Polygon Graftals</title>
+  <link rel="stylesheet" type="text/css" href="graftal.css"/>
+  <!-- 3rd Party Scripts !-->
+  <script type="text/javascript" src="../../3rd_party/dat.gui.min.js"></script>
+  <script type="text/javascript" src="../../3rd_party/glMatrix-0.9.5.min.js"></script>
+  <!-- Library Scripts !-->
+  <script type="text/javascript" src="../../npr.js"></script>
+  <script type="text/javascript" src="../../npr_app_utils.js"></script>
+  <script type="text/javascript" src="../../Shader.js"></script>
+  <script type="text/javascript" src="../../model/sphere.js"></script>
+  <script type="text/javascript" src="../../Mesh.js"></script>
+  <!-- Main Scripts !-->
+  <script type="text/javascript" src="../../Polygon.js"></script>
+  <script type="text/javascript" src="graftal.js"></script>
+  <script type="text/javascript" src="../../Shaders/GraftalShader.js"></script>
+</head>
+<body onload="graftal_init();">
+<div id="maincontent">
+  <div id="canvasholder"><canvas id="main_canvas" width="512" height="512"></canvas></div>
+  <p>R: Reset.</p>
+  <p>D: Cycle polytype (<span id="polytype_span">TRIANGLES</span>)</p>
+  <p class="button" id="button_3d" onclick="show3d();">3d</p>
+</div>
+</body>
+</html>

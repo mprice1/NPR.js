@@ -1,0 +1,10 @@
+canvas {
+	background-color:#79f;
+}
+#maincontent {
+	margin-left:auto;
+	margin-right:auto;
+	width:600px;
+	border:1px solid;
+	padding:15px;
+}

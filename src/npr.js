@@ -34,74 +34,27 @@ NPR.init = function(gl) {
   ScreenQuad.TextureCoordinateBuffer.numItems = 6;
   NPR.ScreenQuad = ScreenQuad;
 
-  // The simplest flat texture shader, used for drawing the fullscreen quad with 
-  // a framebuffer texture from a pass. Used all the time, so compiled on init.
-  var vs = "\
-    attribute vec3 aVertexPosition;\
-    attribute vec2 aTexureCoordinate;\
-    varying vec2 vTexCoord;\
-    void main(void) {\
-      vTexCoord = aTexureCoordinate;\
-      gl_Position = vec4(aVertexPosition, 1.0);\
-    }\
-    "
-
-  var fs = "\
-    #ifdef GL_ES\n\
-      precision highp float;\n\
-    #endif\n\
-    uniform sampler2D uTextureSampler;\
-    varying vec2 vTexCoord;\
-    uniform float uScale;\
-    void main(void) {\
-      vec2 tc = vTexCoord;\
-      if (uScale < 0.0) tc.t = 1.0 - tc.t;\
-      vec4 texcol = texture2D(uTextureSampler, tc);\
-      gl_FragColor = texcol;\
-    }\
-    "
-  NPR.TextureShader = new NPR.Shader(vs, fs);
+  var TextureShader = new NPR.TextureShader();
+  NPR.TextureShaderSingleton = TextureShader;
 
   // Draw a textured quad to the screen.
-  // TODO: It will be a good test of the Shader API to rewrite this
-  // function in a way that actually uses it instead of subverting it.
-  // But the Shader API (uniforms etc) isn't quite there yet.
-  NPR.DrawTexture = function(tex, flipy) {
+  NPR.DrawTexture = function(tex, scale) {
   	var gl = NPR.gl;
+    scale = scale || [1,1];
   	gl.disable(gl.DEPTH_TEST);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
-    gl.useProgram(NPR.TextureShader.program);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, NPR.ScreenQuad.TextureCoordinateBuffer);
-    var loc = gl.getAttribLocation(NPR.TextureShader.program, "aTexureCoordinate");
-    gl.enableVertexAttribArray(loc);
-    gl.vertexAttribPointer(
-	    loc,
-	    NPR.ScreenQuad.TextureCoordinateBuffer.itemSize, gl.FLOAT, false, 0, 0);
-	
-	gl.bindBuffer(gl.ARRAY_BUFFER, NPR.ScreenQuad.VertexPositionBuffer);
-	loc = gl.getAttribLocation(NPR.TextureShader.program, "aVertexPosition");
-	gl.enableVertexAttribArray(loc);
-    gl.vertexAttribPointer(
-    	loc,
-	    NPR.ScreenQuad.VertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-	// Bind texture.
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.uniform1i(
-	    gl.getUniformLocation(NPR.TextureShader.program, "uTextureSampler"),
-		0);
-
-    gl.uniform1f(
-      gl.getUniformLocation(NPR.TextureShader.program, "uScale"),
-    flipy ? -1 : 1);
-
-	gl.drawArrays(gl.TRIANGLES, 0, NPR.ScreenQuad.VertexPositionBuffer.numItems);
-
-	gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    var identity = mat4.create();
+    mat4.identity(identity);
+    TextureShader.setUniforms({
+      "uMVMatrix" : identity,
+      "uPMatrix" : identity,
+      "uTexture" : 0,
+      "uScale" : scale
+    })
+    TextureShader.drawModel(NPR.ScreenQuad);
     gl.enable(gl.DEPTH_TEST);
     gl.disable(gl.BLEND);
   }

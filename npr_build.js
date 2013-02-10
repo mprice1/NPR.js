@@ -36,19 +36,12 @@ NPR.Framebuffer = function(params) {
 	var gl = NPR.gl;
 
 	// Set parameters, either from defaults or from paremeter object.
-	if (params) {
-		var width = params.width;
-		var height = params.height;
-		var type = params.type;
-		var channelFormat = params.channelFormat;
-		var do_depth = params.hasDepth;
-	} else {
-		var width = gl.viewportWidth;
-		var height = gl.viewportHeight;
-		var type = gl.UNSIGNED_BYTE;
-		var channelFormat = gl.RGBA;
-		var do_depth = true;
-	}
+  params = params || {};
+  var width = params.width || gl.viewportWidth;
+	var height = params.height || gl.viewportHeight;
+	var type = params.type || gl.UNSIGNED_BYTE;
+	var channelFormat = params.channelFormat || gl.RGBA;
+	var do_depth = params.hasDepth !== undefined ? params.hasDepth : true;
 
 	// fbo is the actual WebGL FramebufferObject, for which this is a wrapper.
 	this.fbo = gl.createFramebuffer();
@@ -63,24 +56,25 @@ NPR.Framebuffer = function(params) {
 	this.texture = gl.createTexture();
 	gl.bindTexture(gl.TEXTURE_2D, this.texture);
 	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-	// These texture parameters work with NPOT textures.
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texImage2D(gl.TEXTURE_2D, 0, channelFormat, this.fbo.width, this.fbo.height, 0, channelFormat, type, null);
-    // Bind to fbo.
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texture, 0);
 
-    if (do_depth) {
-      // Renderbuffer for the Depth attachment.
-      var depth_renderbuffer = gl.createRenderbuffer();
-      gl.bindRenderbuffer(gl.RENDERBUFFER, depth_renderbuffer);
-      gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, this.fbo.width, this.fbo.height);
-      // Bind to fbo.
-      gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depth_renderbuffer);
-    }
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+	// These texture parameters work with NPOT textures.
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texImage2D(gl.TEXTURE_2D, 0, channelFormat, this.fbo.width, this.fbo.height, 0, channelFormat, type, null);
+  // Bind to fbo.
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texture, 0);
+
+  if (do_depth) {
+    // Renderbuffer for the Depth attachment.
+    var depth_renderbuffer = gl.createRenderbuffer();
+    gl.bindRenderbuffer(gl.RENDERBUFFER, depth_renderbuffer);
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, this.fbo.width, this.fbo.height);
+    // Bind to fbo.
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depth_renderbuffer);
+  }
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 }
 
 NPR.Framebuffer.prototype.bind = function() {
@@ -96,20 +90,6 @@ NPR.Framebuffer.prototype.release = function() {
 NPR.Framebuffer.prototype.bindTexture = function() {
 	var gl = NPR.gl;
 	gl.bindTexture(gl.TEXTURE_2D, this.texture);
-}
-
-//
-//  Class FramebufferParams.
-//  This is just a container for a number of parameters.
-//
-
-NPR.FrameBufferParams = function(width, height, hasDepth, channelFormat, type) {
-	var gl = NPR.gl;
-	this.width = width ? width : gl.viewportWidth;
-	this.height = height ? height : gl.viewportHeight;
-	this.hasDepth = hasDepth==undefined ? true : !!hasDepth;
-	this.channelFormat = channelFormat ? channelFormat : gl.RGBA; 
-	this.type = type ? type : gl.UNSIGNED_BYTE;
 }
 //////////////////////////////////////
 // src\Mesh.js
@@ -681,74 +661,27 @@ NPR.init = function(gl) {
   ScreenQuad.TextureCoordinateBuffer.numItems = 6;
   NPR.ScreenQuad = ScreenQuad;
 
-  // The simplest flat texture shader, used for drawing the fullscreen quad with 
-  // a framebuffer texture from a pass. Used all the time, so compiled on init.
-  var vs = "\
-    attribute vec3 aVertexPosition;\
-    attribute vec2 aTexureCoordinate;\
-    varying vec2 vTexCoord;\
-    void main(void) {\
-      vTexCoord = aTexureCoordinate;\
-      gl_Position = vec4(aVertexPosition, 1.0);\
-    }\
-    "
-
-  var fs = "\
-    #ifdef GL_ES\n\
-      precision highp float;\n\
-    #endif\n\
-    uniform sampler2D uTextureSampler;\
-    varying vec2 vTexCoord;\
-    uniform float uScale;\
-    void main(void) {\
-      vec2 tc = vTexCoord;\
-      if (uScale < 0.0) tc.t = 1.0 - tc.t;\
-      vec4 texcol = texture2D(uTextureSampler, tc);\
-      gl_FragColor = texcol;\
-    }\
-    "
-  NPR.TextureShader = new NPR.Shader(vs, fs);
+  var TextureShader = new NPR.TextureShader();
+  NPR.TextureShaderSingleton = TextureShader;
 
   // Draw a textured quad to the screen.
-  // TODO: It will be a good test of the Shader API to rewrite this
-  // function in a way that actually uses it instead of subverting it.
-  // But the Shader API (uniforms etc) isn't quite there yet.
-  NPR.DrawTexture = function(tex, flipy) {
+  NPR.DrawTexture = function(tex, scale) {
   	var gl = NPR.gl;
+    scale = scale || [1,1];
   	gl.disable(gl.DEPTH_TEST);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
-    gl.useProgram(NPR.TextureShader.program);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, NPR.ScreenQuad.TextureCoordinateBuffer);
-    var loc = gl.getAttribLocation(NPR.TextureShader.program, "aTexureCoordinate");
-    gl.enableVertexAttribArray(loc);
-    gl.vertexAttribPointer(
-	    loc,
-	    NPR.ScreenQuad.TextureCoordinateBuffer.itemSize, gl.FLOAT, false, 0, 0);
-	
-	gl.bindBuffer(gl.ARRAY_BUFFER, NPR.ScreenQuad.VertexPositionBuffer);
-	loc = gl.getAttribLocation(NPR.TextureShader.program, "aVertexPosition");
-	gl.enableVertexAttribArray(loc);
-    gl.vertexAttribPointer(
-    	loc,
-	    NPR.ScreenQuad.VertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-	// Bind texture.
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.uniform1i(
-	    gl.getUniformLocation(NPR.TextureShader.program, "uTextureSampler"),
-		0);
-
-    gl.uniform1f(
-      gl.getUniformLocation(NPR.TextureShader.program, "uScale"),
-    flipy ? -1 : 1);
-
-	gl.drawArrays(gl.TRIANGLES, 0, NPR.ScreenQuad.VertexPositionBuffer.numItems);
-
-	gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    var identity = mat4.create();
+    mat4.identity(identity);
+    TextureShader.setUniforms({
+      "uMVMatrix" : identity,
+      "uPMatrix" : identity,
+      "uTexture" : 0,
+      "uScale" : scale
+    })
+    TextureShader.drawModel(NPR.ScreenQuad);
     gl.enable(gl.DEPTH_TEST);
     gl.disable(gl.BLEND);
   }
@@ -2585,6 +2518,106 @@ NPR.HatchBillboardShader = function() {
 
 NPR.HatchBillboardShader.prototype = Object.create(NPR.Shader.prototype);
 //////////////////////////////////////
+// src\Shaders\OpticalFlowShader.js
+//////////////////////////////////////
+var NPR = NPR || {};
+
+// Optical flow shader using roughly the Lucas Kanade approach as
+// described in http://en.wikipedia.org/wiki/Lucas%E2%80%93Kanade_method
+// This is a pretty straightfoward dumb implementation and you can probably
+// do something cooler/more accurate/more efficient.
+
+NPR.OpticalFlowShader = function() {
+  var gl = NPR.gl;
+
+  var vertex_src = "\
+  attribute vec3 aVertexPosition;\
+  attribute vec2 aVertexTexcoord;\
+  \
+  uniform mat4 uMVMatrix;\
+  uniform mat4 uPMatrix;\
+  \
+  varying vec2 vTexCoord;\
+  \
+  void main(void) {\
+    vTexCoord = aVertexTexcoord;\
+    vec4 mvpos = uMVMatrix * vec4(aVertexPosition, 1.0);\
+    gl_Position = uPMatrix * mvpos;\
+  }\
+  ";
+
+  var fragment_src = "\
+  #ifdef GL_ES\n\
+    precision highp float;\n\
+  #endif\n\
+  uniform sampler2D uTexture0;\
+  uniform sampler2D uTexture1;\
+  uniform sampler2D uTexture2;\
+  uniform vec2 uTexDim;\
+  \
+  varying vec2 vTexCoord;\
+  \
+  float valueFromRgb(vec4 color) {\
+    return dot(vec3(0.3, 0.59, 0.11), color.rgb);\
+  }\
+  \
+  float xGradient(vec2 coord) {\
+    vec2 dx = vec2(5.0 / uTexDim.x, 0.0);\
+    return valueFromRgb(texture2D(uTexture1, coord + dx))\
+         - valueFromRgb(texture2D(uTexture1, coord - dx));\
+  }\
+  \
+  float yGradient(vec2 coord) {\
+    vec2 dy = vec2(0.0, 5.0 / uTexDim.y);\
+    return valueFromRgb(texture2D(uTexture1, coord + dy))\
+         - valueFromRgb(texture2D(uTexture1, coord - dy));\
+  }\
+  \
+  float tGradient(vec2 coord) {\
+    return valueFromRgb(texture2D(uTexture2, coord))\
+         - valueFromRgb(texture2D(uTexture0, coord));\
+  }\
+  \
+  void main(void) {\
+    float sIxIx = 0.0;\
+    float sIyIy = 0.0;\
+    float sIxIy = 0.0;\
+    float sIxIt = 0.0;\
+    float sIyIt = 0.0;\
+    float sample_reach = 3.0;\
+    const float sample_iter_bound = 5.0;\
+    for (float x = -sample_iter_bound; x <= sample_iter_bound; x += 1.0) {\
+      for (float y = -sample_iter_bound; y <= sample_iter_bound; y += 1.0) {\
+        vec2 coord = vTexCoord + vec2(sample_reach * x / uTexDim.x, sample_reach * y / uTexDim.y);\
+        float Ix = xGradient(coord);\
+        float Iy = yGradient(coord);\
+        float It = tGradient(coord);\
+        sIxIx += Ix * Ix;\
+        sIyIy += Iy * Iy;\
+        sIxIy += Ix * Iy;\
+        sIxIt += Ix * It;\
+        sIyIt += Iy * It;\
+      }\
+    }\
+    float ad_m_bc = sIxIx * sIyIy - sIxIy * sIxIy;\
+    mat2 invA = mat2(sIyIy, -sIxIy, -sIxIy, sIxIx) / ad_m_bc;\
+    vec2 uv = invA * -vec2(sIxIt, sIyIt);\
+    \
+    float quot = 10.0;\
+    gl_FragColor = vec4(uv.x/quot + 0.5, uv.y/quot + 0.5, 0.0, 1.0);\
+  }\
+  ";
+
+  NPR.Shader.call(this, vertex_src, fragment_src);
+  this.attributes = {"VertexPositionBuffer" : gl.getAttribLocation(this.program, "aVertexPosition"),
+                     "TextureCoordinateBuffer"     : gl.getAttribLocation(this.program, "aVertexTexcoord")};
+  this.setUniforms({
+    "uTexDim" : [640, 480]
+  });
+}
+
+NPR.OpticalFlowShader.prototype = Object.create(NPR.Shader.prototype);
+//////////////////////////////////////
 // src\Shaders\OutlineShader.js
 //////////////////////////////////////
 //
@@ -2912,3 +2945,58 @@ NPR.PainterlyBillboardShader = function() {
 }
 
 NPR.PainterlyBillboardShader.prototype = Object.create(NPR.Shader.prototype);
+//////////////////////////////////////
+// src\Shaders\TextureShader.js
+//////////////////////////////////////
+//
+// A flat texture shader.
+//
+
+var NPR = NPR || {};
+
+NPR.TextureShader = function() {
+
+  var gl = NPR.gl;
+
+  var vertex_src = "\
+  attribute vec3 aVertexPosition;\
+  attribute vec2 aVertexTexcoord;\
+  uniform mat4 uMVMatrix;\
+  uniform mat4 uPMatrix;\
+  varying vec2 vTexCoord;\
+  void main(void) {\
+    vTexCoord = aVertexTexcoord;\
+    vec4 mvpos = uMVMatrix * vec4(aVertexPosition, 1.0);\
+  	gl_Position = uPMatrix * mvpos;\
+  }\
+  "
+
+  var fragment_src = "\
+  #ifdef GL_ES\n\
+  	precision highp float;\n\
+  #endif\n\
+  uniform sampler2D uTexture;\
+  varying vec2 vTexCoord;\
+  uniform vec2 uScale;\
+  \
+  void main(void) {\
+      vec2 tc = vTexCoord * uScale;\
+      if (uScale.y < 0.0 && uScale.y >= -1.1) {\
+        tc.y = 1.0 - vTexCoord.y;\
+      }\
+      vec4 texcol = texture2D(uTexture, tc);\
+      gl_FragColor = texcol;\
+  }\
+  "
+
+  NPR.Shader.call(this, vertex_src, fragment_src);
+  this.attributes = {
+    "VertexPositionBuffer" : gl.getAttribLocation(this.program, "aVertexPosition"),
+    "TextureCoordinateBuffer" : gl.getAttribLocation(this.program, "aVertexTexcoord")
+  }
+  this.setUniforms({
+    'uScale' : [1,1]
+  });
+}
+
+NPR.TextureShader.prototype = Object.create(NPR.Shader.prototype);

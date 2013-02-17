@@ -147,7 +147,7 @@ function initWebcam() {
   var webcam = document.createElement('video');
   video = webcam;
   webcam.setAttribute('autoplay', '1');
-  navigator.webkitGetUserMedia({'video' : true},
+  (navigator.webkitGetUserMedia || navigator.mozGetUserMedia)({'video' : true},
       function(stream) {
         webcam.src = window.webkitURL.createObjectURL(stream);
       },

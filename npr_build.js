@@ -1,5 +1,5 @@
 //////////////////////////////////////
-// src/BillboardUtils.js
+// src\BillboardUtils.js
 //////////////////////////////////////
 var NPR = NPR || {};
 
@@ -24,7 +24,7 @@ NPR.createInstancedBillboardBuffers = function(gl, num_billboards) {
   return squarePoly.makeInstancedVertexBuffer(gl, num_billboards);
 }
 //////////////////////////////////////
-// src/Framebuffer.js
+// src\Framebuffer.js
 //////////////////////////////////////
 var NPR = NPR || {};
 
@@ -92,7 +92,7 @@ NPR.Framebuffer.prototype.bindTexture = function() {
 	gl.bindTexture(gl.TEXTURE_2D, this.texture);
 }
 //////////////////////////////////////
-// src/Mesh.js
+// src\Mesh.js
 //////////////////////////////////////
 var NPR = NPR || {};
 
@@ -306,7 +306,7 @@ NPR.Mesh.prototype.makeRandomSampleBuffers = function(num_samples, out_array_con
 	this.RandomSampleNormalBuffer = buffers[1];
 }
 //////////////////////////////////////
-// src/modelloader.js
+// src\modelloader.js
 //////////////////////////////////////
 function handleLoadedModel(data, carrier) {
 	 carrier.model = new objmodel(data);
@@ -623,7 +623,7 @@ function makeRandomSampleBuffers(verts, norms, idxs, num_samples) {
 	return [samplebuffer, normsamplebuffer];
 }
 //////////////////////////////////////
-// src/npr.js
+// src\npr.js
 //////////////////////////////////////
 // This is the base utility file for NPR.
 var NPR = NPR || {};
@@ -745,7 +745,7 @@ NPR.init = function(gl) {
 
 NPR.update = function() { NPR.frame++; }
 //////////////////////////////////////
-// src/npr_app_utils.js
+// src\npr_app_utils.js
 //////////////////////////////////////
 // Javascript Document.
 
@@ -941,7 +941,7 @@ NPR.canvasTexture = function(canvas) {
 
 
 //////////////////////////////////////
-// src/Paint.js
+// src\Paint.js
 //////////////////////////////////////
 // Javascript Document.
 
@@ -1084,7 +1084,7 @@ NPR.makeBrushImage = function(size, hardness, color, bcanvas) {
 
 })();
 //////////////////////////////////////
-// src/Polygon.js
+// src\Polygon.js
 //////////////////////////////////////
 var NPR = NPR || {}
 
@@ -1445,7 +1445,7 @@ NPR.Triangles.prototype.getFlattenedTriangles = function(data) {
 
 NPR.Triangles.prototype.polyType = NPR.Polygon.prototype.TRIANGLES;
 //////////////////////////////////////
-// src/RenderPass.js
+// src\RenderPass.js
 //////////////////////////////////////
 var NPR = NPR || {};
 
@@ -1522,7 +1522,7 @@ NPR.PostProcessPass = function() {
 
 NPR.PostProcessPass.prototype = Object.create(NPR.RenderPass.prototype);
 //////////////////////////////////////
-// src/Shader.js
+// src\Shader.js
 //////////////////////////////////////
 var NPR = NPR || {};
 
@@ -1681,7 +1681,7 @@ NPR.Shader = function(vertex_src, fragment_src) {
   }
 }
 //////////////////////////////////////
-// src/Passes/DepthPass.js
+// src\Passes\DepthPass.js
 //////////////////////////////////////
 //
 // A vertex normal rendering pass.  XYZ -> RGB.
@@ -1766,7 +1766,7 @@ NPR.RenderPass.prototype.updateFramebuffer = function(drawcall) {
 
 NPR.DepthPass.prototype = Object.create(NPR.RenderPass.prototype);
 //////////////////////////////////////
-// src/Passes/PainterlyBillboardPass.js
+// src\Passes\PainterlyBillboardPass.js
 //////////////////////////////////////
 //
 // Our Painterly Billboard rendering pass.
@@ -2022,7 +2022,7 @@ NPR.PainterlyBillboardPass = function(do_scale, orientation_mode) {
 
 NPR.PainterlyBillboardPass.prototype = Object.create(NPR.RenderPass.prototype);
 //////////////////////////////////////
-// src/Shaders/ColorLightDirShader.js
+// src\Shaders\ColorLightDirShader.js
 //////////////////////////////////////
 //
 // A directional light shader for a single  color.
@@ -2077,7 +2077,7 @@ NPR.ColorLightDirShader = function() {
 
 NPR.ColorLightDirShader.prototype = Object.create(NPR.Shader.prototype);
 //////////////////////////////////////
-// src/Shaders/ColorShader.js
+// src\Shaders\ColorShader.js
 //////////////////////////////////////
 //
 // A flat color shader for general 3d meshes.
@@ -2124,7 +2124,7 @@ NPR.ColorShader = function() {
 
 NPR.ColorShader.prototype = Object.create(NPR.Shader.prototype);
 //////////////////////////////////////
-// src/Shaders/DepthShader.js
+// src\Shaders\DepthShader.js
 //////////////////////////////////////
 //
 // A Depth shader for general 3d meshes.
@@ -2182,7 +2182,7 @@ NPR.DepthShader = function() {
 
 NPR.DepthShader.prototype = Object.create(NPR.Shader.prototype);
 //////////////////////////////////////
-// src/Shaders/FacingRatioOutlineShader.js
+// src\Shaders\FacingRatioOutlineShader.js
 //////////////////////////////////////
 //
 // A facing-ratio based outline shader.
@@ -2240,7 +2240,7 @@ NPR.FacingRatioOutlineShader = function() {
 
 NPR.FacingRatioOutlineShader.prototype = Object.create(NPR.Shader.prototype);
 //////////////////////////////////////
-// src/Shaders/GraftalShader.js
+// src\Shaders\GraftalShader.js
 //////////////////////////////////////
 //
 // A shader for instanced graftals.
@@ -2351,7 +2351,7 @@ NPR.GraftalShader = function() {
 
 NPR.GraftalShader.prototype = Object.create(NPR.Shader.prototype);
 //////////////////////////////////////
-// src/Shaders/HatchBillboardShader.js
+// src\Shaders\HatchBillboardShader.js
 //////////////////////////////////////
 //
 // A shader for Hatching from Tonal Art Maps, implemented as instanced quad splats.
@@ -2518,7 +2518,7 @@ NPR.HatchBillboardShader = function() {
 
 NPR.HatchBillboardShader.prototype = Object.create(NPR.Shader.prototype);
 //////////////////////////////////////
-// src/Shaders/OpticalFlowShader.js
+// src\Shaders\OpticalFlowShader.js
 //////////////////////////////////////
 var NPR = NPR || {};
 
@@ -2629,7 +2629,7 @@ NPR.OpticalFlowShader = function() {
 
 NPR.OpticalFlowShader.prototype = Object.create(NPR.Shader.prototype);
 //////////////////////////////////////
-// src/Shaders/OutlineShader.js
+// src\Shaders\OutlineShader.js
 //////////////////////////////////////
 //
 // Textured outline shader.  
@@ -2840,7 +2840,7 @@ NPR.OutlineShader = function() {
 
 NPR.OutlineShader.prototype = Object.create(NPR.Shader.prototype);
 //////////////////////////////////////
-// src/Shaders/PainterlyBillboardShader.js
+// src\Shaders\PainterlyBillboardShader.js
 //////////////////////////////////////
 //
 // A shader for painterly rendering of instanced quad billboards.
@@ -2957,7 +2957,7 @@ NPR.PainterlyBillboardShader = function() {
 
 NPR.PainterlyBillboardShader.prototype = Object.create(NPR.Shader.prototype);
 //////////////////////////////////////
-// src/Shaders/TextureShader.js
+// src\Shaders\TextureShader.js
 //////////////////////////////////////
 //
 // A flat texture shader.

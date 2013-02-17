@@ -13,7 +13,7 @@ var video_textures = [];
 
 var FLOW_FRAMES = 3;
 var tex_offset = FLOW_FRAMES - 1;
-var flow_update_framerate = 5;
+var flow_update_framerate = 10;
 
 var px, py, x, y;
 var mousedown = false;
@@ -52,19 +52,20 @@ var advect_frag_src = "\
   void main(void) {\
     vec2 flow = texture2D(uFlowTexture, vec2(1.0 - vTexCoord.x, vTexCoord.y)).xy;\
     flow = 2.0 * flow - vec2(1.0, 1.0);\
-    flow.x = flow.x;\
+    flow = -flow;\
+    if (length(flow) < 0.005) flow = vec2(0.0, 0.0);\
     vec2 tc = vTexCoord - flow * uFlowScale;\
     vec4 webcam_color = texture2D(uWebcamTexture, vec2(1.0,1.0) - vTexCoord);\
     vec4 bgtex = texture2D(uTexture, vTexCoord * vec2(2.0,2.0));\
     vec4 accum_color = texture2D(uAccumTexture, vec2(tc.x, 1.0 - tc.y));\
-    gl_FragColor = mix(webcam_color, accum_color, min(1.0, length(flow)*length(flow)*10000.0));\
+    gl_FragColor = mix(webcam_color, accum_color, min(1.0, length(flow)*length(flow)*32300.0));\
   }";
 
 function init() {
   canvas = document.getElementById('main_canvas');
-  canvas.width = document.width;  canvas.height = document.height;
-  canvas.style.width = document.width + "px";
-  canvas.style.height = document.height + "px";
+  canvas.width = 640;  canvas.height = 480;
+  canvas.style.width = window.innerWidth + 'px';
+  canvas.style.height = window.innerHeight + 'px';
   NPR.start(canvas);
   gl = NPR.gl;
 
@@ -86,12 +87,16 @@ function init() {
     "TextureCoordinateBuffer" : gl.getAttribLocation(shaders['advect'].program, "aVertexTexcoord")
   }
 
-  //if (!gl.getExtension('OES_texture_float')) throw "uh oh";
-  fbos['flow'] = new NPR.Framebuffer(/*{'type' : gl.FLOAT}*/);
+  fbos['flow'] = new NPR.Framebuffer();
   fbos['main'] = new NPR.Framebuffer();
   initWebcam();
   initBrush();
   initParams();
+
+  window.onresize = function() {
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+  }
 }
 
 function initParams() {
@@ -102,7 +107,7 @@ function initParams() {
     "reset_accum": function(){reset_accum = true;}
   };
   var gui = new dat.GUI();
-  gui.add(params, "flow_scale", 0, 1);
+  gui.add(params, "flow_scale", 0, 10);
   gui.add(params, "sample_reach", 1, 15);
   gui.add(params, 'display', { effect: "effect", flow: "flow" } );
   gui.add(params, 'reset_accum');
@@ -147,7 +152,7 @@ function initWebcam() {
   var webcam = document.createElement('video');
   video = webcam;
   webcam.setAttribute('autoplay', '1');
-  (navigator.webkitGetUserMedia || navigator.mozGetUserMedia)({'video' : true},
+  navigator.webkitGetUserMedia({'video' : true},
       function(stream) {
         webcam.src = window.webkitURL.createObjectURL(stream);
       },
@@ -178,7 +183,7 @@ function update() {
 function drawBrush(x, y) {
   var identity = mat4.identity(mat4.create());
   var mv = mat4.identity(mat4.create());
-  mat4.translate(mv, [(x * 2 / canvas.width) - 1 , (y * 2 / canvas.height) - 1, 0]);
+  mat4.translate(mv, [(x * 2 / window.innerWidth) - 1 , (y * 2 / window.innerHeight) - 1, 0]);
   mat4.scale(mv, [.1, .1, 1]);
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, texs['brick']);
@@ -191,6 +196,7 @@ function drawBrush(x, y) {
 }
 
 function draw() {
+  if (NPR.frame % flow_update_framerate != 0) return;
   gl.disable(gl.DEPTH_TEST);
   var identity = mat4.identity(mat4.create());
   if (NPR.frame % flow_update_framerate == 0) {

@@ -1,17 +1,25 @@
 // Optical flow toy.
 
+// Contexts.
 var canvas;
+var video;
 var gl;
+
+// Assets.
 var texs = {};
 var fbos = {};
 var shaders = {};
-var video;
 var video_textures = [];
+
 var FLOW_FRAMES = 3;
 var tex_offset = FLOW_FRAMES - 1;
-var flow_update_framerate = 10;
+var flow_update_framerate = 5;
+
 var px, py, x, y;
 var mousedown = false;
+var params;
+// If true, we draw something special to the main framebuffer.
+var reset_accum = true;
 
 var advect_vert_src = "\
   attribute vec3 aVertexPosition;\
@@ -36,24 +44,20 @@ var advect_frag_src = "\
   uniform sampler2D uTexture;\
   uniform sampler2D uWebcamTexture;\
   uniform sampler2D uAccumTexture;\
-  uniform vec2 uTexDim;\
+  uniform float uFlowScale;\
   uniform float uClock;\
   \
   varying vec2 vTexCoord;\
   \
   void main(void) {\
     vec2 flow = texture2D(uFlowTexture, vec2(1.0 - vTexCoord.x, vTexCoord.y)).xy;\
-    flow = flow - vec2(0.5, 0.5);\
-    vec2 tc = vTexCoord + flow/100.0;\
+    flow = 2.0 * flow - vec2(1.0, 1.0);\
+    flow.x = flow.x;\
+    vec2 tc = vTexCoord - flow * uFlowScale;\
     vec4 webcam_color = texture2D(uWebcamTexture, vec2(1.0,1.0) - vTexCoord);\
     vec4 bgtex = texture2D(uTexture, vTexCoord * vec2(2.0,2.0));\
-    bgtex.r = uClock * bgtex.r;\
-    if (length(flow) < 0.00555) {\
-      gl_FragColor = mix(bgtex, webcam_color, 0.0);\
-    } else {\
-      tc.y = 1.0 - tc.y;\
-      gl_FragColor = texture2D(uAccumTexture, tc);\
-    }\
+    vec4 accum_color = texture2D(uAccumTexture, vec2(tc.x, 1.0 - tc.y));\
+    gl_FragColor = mix(webcam_color, accum_color, min(1.0, length(flow)*length(flow)*10000.0));\
   }";
 
 function init() {
@@ -82,10 +86,26 @@ function init() {
     "TextureCoordinateBuffer" : gl.getAttribLocation(shaders['advect'].program, "aVertexTexcoord")
   }
 
-  fbos['flow'] = new NPR.Framebuffer();
+  //if (!gl.getExtension('OES_texture_float')) throw "uh oh";
+  fbos['flow'] = new NPR.Framebuffer(/*{'type' : gl.FLOAT}*/);
   fbos['main'] = new NPR.Framebuffer();
   initWebcam();
   initBrush();
+  initParams();
+}
+
+function initParams() {
+  params = {
+    "flow_scale": 0.1,
+    "sample_reach": 1.0,
+    "display": 'effect',
+    "reset_accum": function(){reset_accum = true;}
+  };
+  var gui = new dat.GUI();
+  gui.add(params, "flow_scale", 0, 1);
+  gui.add(params, "sample_reach", 1, 15);
+  gui.add(params, 'display', { effect: "effect", flow: "flow" } );
+  gui.add(params, 'reset_accum');
 }
 
 function initBrush() {
@@ -189,7 +209,10 @@ function draw() {
       "uTexture1": idx1,
       "uTexture2": idx2,
       "uMVMatrix": identity,
-      "uPMatrix": identity});
+      "uPMatrix": identity,
+      "uTexDim": [canvas.width, canvas.height],
+      "uSampleReach": params.sample_reach
+    });
     fbos['flow'].bind();
     shaders['flow'].drawModel(NPR.ScreenQuad);
     fbos['flow'].release();
@@ -210,14 +233,27 @@ function draw() {
     "uAccumTexture" : 1,
     "uTexture": 2,
     "uWebcamTexture": 3,
-    "uTexDim": [1,1],
-    "uClock": Math.sin(NPR.frame / 100)
+    "uClock": Math.sin(NPR.frame / 100),
+    "uFlowScale": params.flow_scale
   });
   fbos['main'].bind();
-  shaders['advect'].drawModel(NPR.ScreenQuad);
+  if (reset_accum) {
+    reset_accum = false;
+    NPR.DrawTexture(video_textures[tex_offset], [-1,-1]);
+  } else {
+    shaders['advect'].drawModel(NPR.ScreenQuad);
+  }
   //if (mousedown) {
     drawBrush(x, y);
   //}
   fbos['main'].release();
-  NPR.DrawTexture(fbos['main'].texture);
+  switch(params.display) {
+    case 'effect':
+      NPR.DrawTexture(fbos['main'].texture);
+      break;
+    case 'flow':
+      NPR.DrawTexture(fbos['flow'].texture, [-1, -1]);
+      break;
+  }
+  
 }

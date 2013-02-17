@@ -34,6 +34,9 @@ NPR.TextureShader = function() {
       if (uScale.y < 0.0 && uScale.y >= -1.1) {\
         tc.y = 1.0 - vTexCoord.y;\
       }\
+      if (uScale.x < 0.0 && uScale.x >= -1.1) {\
+        tc.x = 1.0 - vTexCoord.x;\
+      }\
       vec4 texcol = texture2D(uTexture, tc);\
       gl_FragColor = texcol;\
   }\

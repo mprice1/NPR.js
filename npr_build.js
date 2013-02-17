@@ -1,5 +1,5 @@
 //////////////////////////////////////
-// src\BillboardUtils.js
+// src/BillboardUtils.js
 //////////////////////////////////////
 var NPR = NPR || {};
 
@@ -24,7 +24,7 @@ NPR.createInstancedBillboardBuffers = function(gl, num_billboards) {
   return squarePoly.makeInstancedVertexBuffer(gl, num_billboards);
 }
 //////////////////////////////////////
-// src\Framebuffer.js
+// src/Framebuffer.js
 //////////////////////////////////////
 var NPR = NPR || {};
 
@@ -92,7 +92,7 @@ NPR.Framebuffer.prototype.bindTexture = function() {
 	gl.bindTexture(gl.TEXTURE_2D, this.texture);
 }
 //////////////////////////////////////
-// src\Mesh.js
+// src/Mesh.js
 //////////////////////////////////////
 var NPR = NPR || {};
 
@@ -306,7 +306,7 @@ NPR.Mesh.prototype.makeRandomSampleBuffers = function(num_samples, out_array_con
 	this.RandomSampleNormalBuffer = buffers[1];
 }
 //////////////////////////////////////
-// src\modelloader.js
+// src/modelloader.js
 //////////////////////////////////////
 function handleLoadedModel(data, carrier) {
 	 carrier.model = new objmodel(data);
@@ -623,7 +623,7 @@ function makeRandomSampleBuffers(verts, norms, idxs, num_samples) {
 	return [samplebuffer, normsamplebuffer];
 }
 //////////////////////////////////////
-// src\npr.js
+// src/npr.js
 //////////////////////////////////////
 // This is the base utility file for NPR.
 var NPR = NPR || {};
@@ -745,7 +745,7 @@ NPR.init = function(gl) {
 
 NPR.update = function() { NPR.frame++; }
 //////////////////////////////////////
-// src\npr_app_utils.js
+// src/npr_app_utils.js
 //////////////////////////////////////
 // Javascript Document.
 
@@ -941,7 +941,7 @@ NPR.canvasTexture = function(canvas) {
 
 
 //////////////////////////////////////
-// src\Paint.js
+// src/Paint.js
 //////////////////////////////////////
 // Javascript Document.
 
@@ -1084,7 +1084,7 @@ NPR.makeBrushImage = function(size, hardness, color, bcanvas) {
 
 })();
 //////////////////////////////////////
-// src\Polygon.js
+// src/Polygon.js
 //////////////////////////////////////
 var NPR = NPR || {}
 
@@ -1445,7 +1445,7 @@ NPR.Triangles.prototype.getFlattenedTriangles = function(data) {
 
 NPR.Triangles.prototype.polyType = NPR.Polygon.prototype.TRIANGLES;
 //////////////////////////////////////
-// src\RenderPass.js
+// src/RenderPass.js
 //////////////////////////////////////
 var NPR = NPR || {};
 
@@ -1522,7 +1522,7 @@ NPR.PostProcessPass = function() {
 
 NPR.PostProcessPass.prototype = Object.create(NPR.RenderPass.prototype);
 //////////////////////////////////////
-// src\Shader.js
+// src/Shader.js
 //////////////////////////////////////
 var NPR = NPR || {};
 
@@ -1681,7 +1681,7 @@ NPR.Shader = function(vertex_src, fragment_src) {
   }
 }
 //////////////////////////////////////
-// src\Passes\DepthPass.js
+// src/Passes/DepthPass.js
 //////////////////////////////////////
 //
 // A vertex normal rendering pass.  XYZ -> RGB.
@@ -1766,7 +1766,7 @@ NPR.RenderPass.prototype.updateFramebuffer = function(drawcall) {
 
 NPR.DepthPass.prototype = Object.create(NPR.RenderPass.prototype);
 //////////////////////////////////////
-// src\Passes\PainterlyBillboardPass.js
+// src/Passes/PainterlyBillboardPass.js
 //////////////////////////////////////
 //
 // Our Painterly Billboard rendering pass.
@@ -2022,7 +2022,7 @@ NPR.PainterlyBillboardPass = function(do_scale, orientation_mode) {
 
 NPR.PainterlyBillboardPass.prototype = Object.create(NPR.RenderPass.prototype);
 //////////////////////////////////////
-// src\Shaders\ColorLightDirShader.js
+// src/Shaders/ColorLightDirShader.js
 //////////////////////////////////////
 //
 // A directional light shader for a single  color.
@@ -2077,7 +2077,7 @@ NPR.ColorLightDirShader = function() {
 
 NPR.ColorLightDirShader.prototype = Object.create(NPR.Shader.prototype);
 //////////////////////////////////////
-// src\Shaders\ColorShader.js
+// src/Shaders/ColorShader.js
 //////////////////////////////////////
 //
 // A flat color shader for general 3d meshes.
@@ -2124,7 +2124,7 @@ NPR.ColorShader = function() {
 
 NPR.ColorShader.prototype = Object.create(NPR.Shader.prototype);
 //////////////////////////////////////
-// src\Shaders\DepthShader.js
+// src/Shaders/DepthShader.js
 //////////////////////////////////////
 //
 // A Depth shader for general 3d meshes.
@@ -2182,7 +2182,7 @@ NPR.DepthShader = function() {
 
 NPR.DepthShader.prototype = Object.create(NPR.Shader.prototype);
 //////////////////////////////////////
-// src\Shaders\FacingRatioOutlineShader.js
+// src/Shaders/FacingRatioOutlineShader.js
 //////////////////////////////////////
 //
 // A facing-ratio based outline shader.
@@ -2240,7 +2240,7 @@ NPR.FacingRatioOutlineShader = function() {
 
 NPR.FacingRatioOutlineShader.prototype = Object.create(NPR.Shader.prototype);
 //////////////////////////////////////
-// src\Shaders\GraftalShader.js
+// src/Shaders/GraftalShader.js
 //////////////////////////////////////
 //
 // A shader for instanced graftals.
@@ -2351,7 +2351,7 @@ NPR.GraftalShader = function() {
 
 NPR.GraftalShader.prototype = Object.create(NPR.Shader.prototype);
 //////////////////////////////////////
-// src\Shaders\HatchBillboardShader.js
+// src/Shaders/HatchBillboardShader.js
 //////////////////////////////////////
 //
 // A shader for Hatching from Tonal Art Maps, implemented as instanced quad splats.
@@ -2518,7 +2518,7 @@ NPR.HatchBillboardShader = function() {
 
 NPR.HatchBillboardShader.prototype = Object.create(NPR.Shader.prototype);
 //////////////////////////////////////
-// src\Shaders\OpticalFlowShader.js
+// src/Shaders/OpticalFlowShader.js
 //////////////////////////////////////
 var NPR = NPR || {};
 
@@ -2526,6 +2526,12 @@ var NPR = NPR || {};
 // described in http://en.wikipedia.org/wiki/Lucas%E2%80%93Kanade_method
 // This is a pretty straightfoward dumb implementation and you can probably
 // do something cooler/more accurate/more efficient.
+//
+// This shader normalizes the output by dividing it by the texture dimension
+// (input as a uniform vec2) and mapping [-1, 1] to [0, 1] so that it can fit
+// in a standard texture. There is nothing stopping you from removing this
+// normalization step at the end and using floating point textures if you are
+// so inclined.
 
 NPR.OpticalFlowShader = function() {
   var gl = NPR.gl;
@@ -2554,6 +2560,7 @@ NPR.OpticalFlowShader = function() {
   uniform sampler2D uTexture1;\
   uniform sampler2D uTexture2;\
   uniform vec2 uTexDim;\
+  uniform float uSampleReach;\
   \
   varying vec2 vTexCoord;\
   \
@@ -2562,13 +2569,13 @@ NPR.OpticalFlowShader = function() {
   }\
   \
   float xGradient(vec2 coord) {\
-    vec2 dx = vec2(5.0 / uTexDim.x, 0.0);\
+    vec2 dx = vec2(1.0 / uTexDim.x, 0.0);\
     return valueFromRgb(texture2D(uTexture1, coord + dx))\
          - valueFromRgb(texture2D(uTexture1, coord - dx));\
   }\
   \
   float yGradient(vec2 coord) {\
-    vec2 dy = vec2(0.0, 5.0 / uTexDim.y);\
+    vec2 dy = vec2(0.0, 1.0 / uTexDim.y);\
     return valueFromRgb(texture2D(uTexture1, coord + dy))\
          - valueFromRgb(texture2D(uTexture1, coord - dy));\
   }\
@@ -2584,11 +2591,10 @@ NPR.OpticalFlowShader = function() {
     float sIxIy = 0.0;\
     float sIxIt = 0.0;\
     float sIyIt = 0.0;\
-    float sample_reach = 3.0;\
-    const float sample_iter_bound = 5.0;\
+    const float sample_iter_bound = 10.0;\
     for (float x = -sample_iter_bound; x <= sample_iter_bound; x += 1.0) {\
       for (float y = -sample_iter_bound; y <= sample_iter_bound; y += 1.0) {\
-        vec2 coord = vTexCoord + vec2(sample_reach * x / uTexDim.x, sample_reach * y / uTexDim.y);\
+        vec2 coord = vTexCoord + vec2(uSampleReach * x / uTexDim.x, uSampleReach * y / uTexDim.y);\
         float Ix = xGradient(coord);\
         float Iy = yGradient(coord);\
         float It = tGradient(coord);\
@@ -2600,11 +2606,15 @@ NPR.OpticalFlowShader = function() {
       }\
     }\
     float ad_m_bc = sIxIx * sIyIy - sIxIy * sIxIy;\
-    mat2 invA = mat2(sIyIy, -sIxIy, -sIxIy, sIxIx) / ad_m_bc;\
-    vec2 uv = invA * -vec2(sIxIt, sIyIt);\
+    vec2 flow = vec2(0,0);\
+    if (ad_m_bc != 0.0) {\
+      mat2 invA = mat2(sIyIy, -sIxIy, -sIxIy, sIxIx) / ad_m_bc;\
+      flow = invA * -vec2(sIxIt, sIyIt);\
+    }\
+    vec2 normalized_flow = flow / uTexDim;\
+    vec2 pos_normalized_flow = normalized_flow / 2.0 + vec2(0.5, 0.5);\
     \
-    float quot = 10.0;\
-    gl_FragColor = vec4(uv.x/quot + 0.5, uv.y/quot + 0.5, 0.0, 1.0);\
+    gl_FragColor = vec4(pos_normalized_flow, 0.0, 1.0);\
   }\
   ";
 
@@ -2612,13 +2622,14 @@ NPR.OpticalFlowShader = function() {
   this.attributes = {"VertexPositionBuffer" : gl.getAttribLocation(this.program, "aVertexPosition"),
                      "TextureCoordinateBuffer"     : gl.getAttribLocation(this.program, "aVertexTexcoord")};
   this.setUniforms({
-    "uTexDim" : [640, 480]
+    "uTexDim" : [640, 480],
+    "uSampleReach": 10,
   });
 }
 
 NPR.OpticalFlowShader.prototype = Object.create(NPR.Shader.prototype);
 //////////////////////////////////////
-// src\Shaders\OutlineShader.js
+// src/Shaders/OutlineShader.js
 //////////////////////////////////////
 //
 // Textured outline shader.  
@@ -2829,7 +2840,7 @@ NPR.OutlineShader = function() {
 
 NPR.OutlineShader.prototype = Object.create(NPR.Shader.prototype);
 //////////////////////////////////////
-// src\Shaders\PainterlyBillboardShader.js
+// src/Shaders/PainterlyBillboardShader.js
 //////////////////////////////////////
 //
 // A shader for painterly rendering of instanced quad billboards.
@@ -2946,7 +2957,7 @@ NPR.PainterlyBillboardShader = function() {
 
 NPR.PainterlyBillboardShader.prototype = Object.create(NPR.Shader.prototype);
 //////////////////////////////////////
-// src\Shaders\TextureShader.js
+// src/Shaders/TextureShader.js
 //////////////////////////////////////
 //
 // A flat texture shader.
@@ -2983,6 +2994,9 @@ NPR.TextureShader = function() {
       vec2 tc = vTexCoord * uScale;\
       if (uScale.y < 0.0 && uScale.y >= -1.1) {\
         tc.y = 1.0 - vTexCoord.y;\
+      }\
+      if (uScale.x < 0.0 && uScale.x >= -1.1) {\
+        tc.x = 1.0 - vTexCoord.x;\
       }\
       vec4 texcol = texture2D(uTexture, tc);\
       gl_FragColor = texcol;\

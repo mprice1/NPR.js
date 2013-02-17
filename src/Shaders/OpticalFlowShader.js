@@ -4,6 +4,12 @@ var NPR = NPR || {};
 // described in http://en.wikipedia.org/wiki/Lucas%E2%80%93Kanade_method
 // This is a pretty straightfoward dumb implementation and you can probably
 // do something cooler/more accurate/more efficient.
+//
+// This shader normalizes the output by dividing it by the texture dimension
+// (input as a uniform vec2) and mapping [-1, 1] to [0, 1] so that it can fit
+// in a standard texture. There is nothing stopping you from removing this
+// normalization step at the end and using floating point textures if you are
+// so inclined.
 
 NPR.OpticalFlowShader = function() {
   var gl = NPR.gl;
@@ -32,6 +38,7 @@ NPR.OpticalFlowShader = function() {
   uniform sampler2D uTexture1;\
   uniform sampler2D uTexture2;\
   uniform vec2 uTexDim;\
+  uniform float uSampleReach;\
   \
   varying vec2 vTexCoord;\
   \
@@ -40,13 +47,13 @@ NPR.OpticalFlowShader = function() {
   }\
   \
   float xGradient(vec2 coord) {\
-    vec2 dx = vec2(5.0 / uTexDim.x, 0.0);\
+    vec2 dx = vec2(1.0 / uTexDim.x, 0.0);\
     return valueFromRgb(texture2D(uTexture1, coord + dx))\
          - valueFromRgb(texture2D(uTexture1, coord - dx));\
   }\
   \
   float yGradient(vec2 coord) {\
-    vec2 dy = vec2(0.0, 5.0 / uTexDim.y);\
+    vec2 dy = vec2(0.0, 1.0 / uTexDim.y);\
     return valueFromRgb(texture2D(uTexture1, coord + dy))\
          - valueFromRgb(texture2D(uTexture1, coord - dy));\
   }\
@@ -62,11 +69,10 @@ NPR.OpticalFlowShader = function() {
     float sIxIy = 0.0;\
     float sIxIt = 0.0;\
     float sIyIt = 0.0;\
-    float sample_reach = 3.0;\
-    const float sample_iter_bound = 5.0;\
+    const float sample_iter_bound = 10.0;\
     for (float x = -sample_iter_bound; x <= sample_iter_bound; x += 1.0) {\
       for (float y = -sample_iter_bound; y <= sample_iter_bound; y += 1.0) {\
-        vec2 coord = vTexCoord + vec2(sample_reach * x / uTexDim.x, sample_reach * y / uTexDim.y);\
+        vec2 coord = vTexCoord + vec2(uSampleReach * x / uTexDim.x, uSampleReach * y / uTexDim.y);\
         float Ix = xGradient(coord);\
         float Iy = yGradient(coord);\
         float It = tGradient(coord);\
@@ -78,11 +84,15 @@ NPR.OpticalFlowShader = function() {
       }\
     }\
     float ad_m_bc = sIxIx * sIyIy - sIxIy * sIxIy;\
-    mat2 invA = mat2(sIyIy, -sIxIy, -sIxIy, sIxIx) / ad_m_bc;\
-    vec2 uv = invA * -vec2(sIxIt, sIyIt);\
+    vec2 flow = vec2(0,0);\
+    if (ad_m_bc != 0.0) {\
+      mat2 invA = mat2(sIyIy, -sIxIy, -sIxIy, sIxIx) / ad_m_bc;\
+      flow = invA * -vec2(sIxIt, sIyIt);\
+    }\
+    vec2 normalized_flow = flow / uTexDim;\
+    vec2 pos_normalized_flow = normalized_flow / 2.0 + vec2(0.5, 0.5);\
     \
-    float quot = 10.0;\
-    gl_FragColor = vec4(uv.x/quot + 0.5, uv.y/quot + 0.5, 0.0, 1.0);\
+    gl_FragColor = vec4(pos_normalized_flow, 0.0, 1.0);\
   }\
   ";
 
@@ -90,7 +100,8 @@ NPR.OpticalFlowShader = function() {
   this.attributes = {"VertexPositionBuffer" : gl.getAttribLocation(this.program, "aVertexPosition"),
                      "TextureCoordinateBuffer"     : gl.getAttribLocation(this.program, "aVertexTexcoord")};
   this.setUniforms({
-    "uTexDim" : [640, 480]
+    "uTexDim" : [640, 480],
+    "uSampleReach": 10,
   });
 }
 

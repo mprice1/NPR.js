@@ -71,6 +71,9 @@ var advect_frag_src = "\
     \
     uniform sampler2D uAttrTex;\
     uniform float uAttrTexDim;\
+    uniform sampler2D uWebcamTexture;\
+    \
+    varying vec3 vColor;\
     \
     vec2 attrTexCell(float idx) {\
       float r = floor(idx / uAttrTexDim);\
@@ -81,17 +84,21 @@ var advect_frag_src = "\
     }\
     \
     void main(void) {\
-      gl_PointSize = 1.0;\
       vec4 attrCol = texture2D(uAttrTex, attrTexCell(aInstanceId));\
-      gl_Position = vec4(attrCol.xy, aInstanceId / 100.0, 1.0);\
+      gl_PointSize = 10.0 / max( 1.0, (attrCol.z / 100.0));\
+      vec2 colorTc = vec2(0.5,0.5) + (attrCol.xy/2.0);\
+      colorTc = vec2(1.0, 1.0) - colorTc;\
+      vColor = texture2D(uWebcamTexture, colorTc).rgb;\
+      gl_Position = vec4(attrCol.xy, 0.0, 1.0);\
     }\
   "
   var pt_frag_src = "\
   precision mediump float;\
   uniform vec3 uCol;\
+  varying vec3 vColor;\
   \
   void main(void) {\
-    gl_FragColor = vec4(uCol,1.0);\
+    gl_FragColor = vec4(vColor, 1.0);\
   }\
   "
 
@@ -113,21 +120,33 @@ var advect_frag_src = "\
   uniform sampler2D uFlowTexture;\
   uniform sampler2D uAttrTex;\
   uniform sampler2D uAttrTexDim;\
+  uniform sampler2D uOriginalAttrTex;\
   uniform float uFlowScale;\
   \
   varying vec2 vTexCoord;\
   \
   void main(void) {\
-    vec3 attr = texture2D(uAttrTex, vTexCoord).xyz;\
+    vec2 simTc =  vec2(vTexCoord.x, 1.0 - vTexCoord.y);\
+    vec3 attr = texture2D(uAttrTex, simTc).xyz;\
+    vec2 colorTc = vec2(0.5,0.5) + (attr.xy/2.0);\
+    colorTc = vec2(1.0, 1.0) - colorTc;\
+    if (length(attr.xy) > 0.0001) {\
     vec2 pos = attr.xy;\
+    float age = attr.z;\
     \
-    vec2 flow = texture2D(uFlowTexture, vTexCoord).xy;\
+    vec2 flow = texture2D(uFlowTexture, colorTc).xy;\
     flow = 2.0 * flow - vec2(1.0, 1.0);\
     flow = -flow;\
     if (length(flow) < 0.005) flow = vec2(0.0, 0.0);\
     \
     vec2 newpos = pos + uFlowScale * flow;\
-    gl_FragColor = vec4(newpos, 0.0, 1.0);\
+    if (attr.z >= 1000.0) {\
+      gl_FragColor.xy = texture2D(uOriginalAttrTex, vec2(simTc.x, simTc.y)).xy;\
+        gl_FragColor.z = 0.0;\
+    } else {\
+      gl_FragColor = vec4(newpos, attr.z + 1.0, 1.0);\
+    }\
+    }\
   }";
 
 function init() {
@@ -188,7 +207,7 @@ function initParams() {
   var gui = new dat.GUI();
   gui.add(params, "flow_scale", 0, 2);
   gui.add(params, "sample_reach", 0.1, 5);
-  gui.add(params, 'display', { advect_webcam: "effect", advect_texture: "tex", flow: "flow", particles_only: "particles_only" } ).onChange(params.reset_buffer);
+  gui.add(params, 'display', { advect_webcam: "effect", advect_texture: "tex", flow: "flow", particles: "particles" } ).onChange(params.reset_buffer);
   gui.add(params, 'lock_framerate');
   gui.add(params, 'reset_buffer');
   gui.add(params, 'reset_particles');
@@ -232,10 +251,10 @@ function initWebcam() {
 function initParticles() {
   // Make attribute texture.
   var positions = [];
-  particle_grid_dim = 100;
+  particle_grid_dim = 20;
   for (var i = -1; i <= 1; i += (1 / particle_grid_dim)) {
     for (var j = -1; j <= 1; j += (1 / particle_grid_dim)) {
-      positions.push([i, j, 0]);
+      positions.push([i, j, Math.random() * 1000.0]);
     }
   }
   texs['particle_attr'] = NPR.MakeAttributeTexture([positions]);
@@ -267,11 +286,14 @@ function initParticles() {
 function drawParticles() {
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, particle_alt ? fbos['particle_2'].texture : fbos['particle_1'].texture);
+  gl.activeTexture(gl.TEXTURE1);
+  gl.bindTexture(gl.TEXTURE_2D, video_textures[tex_offset]);
   shaders['pts'].bind();
   shaders['pts'].setUniforms({
     "uAttrTex": 0,
+    "uWebcamTexture": 1,
     "uAttrTexDim": texs['particle_attr'].dim,
-    "uCol": particle_alt ? [1,0,0] : [0,1,0]
+    "uCol": [1,0,0]
   });
   shaders['pts'].drawModel(particles, gl.POINTS, "VertexIndexBuffer");
 }
@@ -282,11 +304,14 @@ function updateParticles() {
   gl.bindTexture(gl.TEXTURE_2D, read_particles);
   gl.activeTexture(gl.TEXTURE1);
   gl.bindTexture(gl.TEXTURE_2D, fbos['flow'].texture);
+  gl.activeTexture(gl.TEXTURE2);
+  gl.bindTexture(gl.TEXTURE_2D, texs['particle_attr']);
   var write_particles = particle_alt ? fbos['particle_1'] : fbos['particle_2'];
   write_particles.bind();
   shaders['pt_advect'].setUniforms({
   "uFlowTexture": 1,
   "uAttrTex": 0,
+  "uOriginalAttrTex": 2,
   "uAttrTexDim": texs['particle_attr'].dim,
   "uFlowScale": params.flow_scale
   });
@@ -297,10 +322,10 @@ function updateParticles() {
 function resetParticles() {
   gl.disable(gl.DEPTH_TEST);
   fbos['particle_1'].bind();
-  NPR.DrawTexture(texs["particle_attr"]);
+  NPR.DrawTexture(texs["particle_attr"], [1, -1]);
   fbos['particle_1'].release();
   fbos['particle_2'].bind();
-  NPR.DrawTexture(texs["particle_attr"]);
+  NPR.DrawTexture(texs["particle_attr"], [1, -1]);
   fbos['particle_2'].release();
 }
 
@@ -404,11 +429,11 @@ function draw() {
     case 'flow':
       NPR.DrawTexture(fbos['flow'].texture, [-1, -1]);
       break;
-    case 'particles_only':
-      /*gl.clearColor(0,0,0,1);
-      gl.clear(gl.COLOR_BUFFER_BIT);
-      drawParticles();*/
-      NPR.DrawTexture(fbos[particle_alt ? 'particle_2' : 'particle_1'].texture);
+    case 'particles':
+      gl.clearColor(0,0,0,1);
+      //gl.clear(gl.COLOR_BUFFER_BIT);
+      //NPR.DrawTexture(fbos[particle_alt ? 'particle_2' : 'particle_1'].texture);
+      drawParticles();
       break;
     default:
       NPR.DrawTexture(fbos['main'].texture);

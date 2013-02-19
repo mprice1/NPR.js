@@ -86,6 +86,7 @@ var advect_frag_src = "\
     void main(void) {\
       vec4 attrCol = texture2D(uAttrTex, attrTexCell(aInstanceId));\
       gl_PointSize = 10.0 / max( 1.0, (attrCol.z / 100.0));\
+      if (attrCol.z < 100.0) { gl_PointSize = attrCol.z / 100.0 * 10.0; }\
       vec2 colorTc = vec2(0.5,0.5) + (attrCol.xy/2.0);\
       colorTc = vec2(1.0, 1.0) - colorTc;\
       vColor = texture2D(uWebcamTexture, colorTc).rgb;\
@@ -207,7 +208,7 @@ function initParams() {
   var gui = new dat.GUI();
   gui.add(params, "flow_scale", 0, 2);
   gui.add(params, "sample_reach", 0.1, 5);
-  gui.add(params, 'display', { advect_webcam: "effect", advect_texture: "tex", flow: "flow", particles: "particles" } ).onChange(params.reset_buffer);
+  gui.add(params, 'display', { advect_webcam: "effect", advect_texture: "tex", particles: "particles", flow: "flow"} ).onChange(params.reset_buffer);
   gui.add(params, 'lock_framerate');
   gui.add(params, 'reset_buffer');
   gui.add(params, 'reset_particles');
